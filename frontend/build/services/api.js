@@ -56,6 +56,16 @@ export const api = {
         }
     },
 
+    async updateEvent(eventId, event) {
+        const response = await fetch(`${API_BASE}/events/${eventId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(event)
+        });
+        const data = await parseResponse(response);
+        return normalizeEvent(data);
+    },
+
     async registerForEvent(eventId, payload) {
         const response = await fetch(`${API_BASE}/events/${eventId}/register`, {
             method: 'POST',

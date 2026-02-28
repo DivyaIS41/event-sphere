@@ -2,6 +2,7 @@ import express from "express";
 import {
   getEvents,
   createEvent,
+  updateEvent,
   registerForEvent,
   getRegistrations,
   healthCheck,
@@ -13,6 +14,7 @@ router.get("/health", healthCheck);
 
 router.get("/events", getEvents);
 router.post("/events", createEvent);
+router.put("/events/:id", updateEvent);
 router.post("/events/:id/register", registerForEvent);
 router.get("/events/:id/registrations", getRegistrations);
 

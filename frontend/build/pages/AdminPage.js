@@ -7,7 +7,7 @@ export const AdminPage = {
                 <div class="container">
                     <header class="page-header">
                         <h1>Admin Dashboard</h1>
-                        <p>Create events and monitor registration volume.</p>
+                        <p>Create, edit, and monitor event registrations.</p>
                     </header>
 
                     <section class="admin-dashboard">
@@ -34,6 +34,32 @@ export const AdminPage = {
                         </article>
 
                         <article class="admin-card">
+                            <div class="card-header">
+                                <h2>Edit Event</h2>
+                            </div>
+                            <form id="edit-event-form" class="event-form" style="display:none;">
+                                <input type="hidden" id="edit-event-id" />
+                                <div class="form-group">
+                                    <label for="edit-event-title">Title</label>
+                                    <input type="text" id="edit-event-title" name="title" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit-event-date">Date</label>
+                                    <input type="date" id="edit-event-date" name="date" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit-event-description">Description</label>
+                                    <textarea id="edit-event-description" name="description" rows="4" required></textarea>
+                                </div>
+                                <div style="display:flex; gap: 0.75rem;">
+                                    <button type="submit" class="submit-btn">Update Event</button>
+                                    <button type="button" id="cancel-edit-btn" class="btn-secondary">Cancel</button>
+                                </div>
+                            </form>
+                            <div id="edit-message" class="form-message"></div>
+                        </article>
+
+                        <article class="admin-card">
                             <div class="card-header card-header-between">
                                 <h2>Events</h2>
                                 <span class="badge badge-primary" id="events-total-badge">0</span>
@@ -50,7 +76,11 @@ export const AdminPage = {
 
     async afterRender() {
         await this.loadEventsList();
+        this.bindCreateForm();
+        this.bindEditForm();
+    },
 
+    bindCreateForm() {
         const form = document.getElementById('create-event-form');
         const messageDiv = document.getElementById('form-message');
 
@@ -87,12 +117,57 @@ export const AdminPage = {
         });
     },
 
+    bindEditForm() {
+        const form = document.getElementById('edit-event-form');
+        const messageDiv = document.getElementById('edit-message');
+        const cancelBtn = document.getElementById('cancel-edit-btn');
+
+        cancelBtn.addEventListener('click', () => {
+            form.style.display = 'none';
+            form.reset();
+            messageDiv.textContent = '';
+            messageDiv.className = 'form-message';
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const eventId = document.getElementById('edit-event-id').value;
+
+            const eventData = {
+                title: String(document.getElementById('edit-event-title').value || '').trim(),
+                date: document.getElementById('edit-event-date').value,
+                description: String(document.getElementById('edit-event-description').value || '').trim()
+            };
+
+            if (!eventId || !eventData.title || !eventData.date || !eventData.description) {
+                this.showMessage(messageDiv, 'All fields are required.', 'error');
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Updating...';
+
+            try {
+                await api.updateEvent(eventId, eventData);
+                this.showMessage(messageDiv, 'Event updated successfully.', 'success');
+                await this.loadEventsList();
+            } catch (error) {
+                this.showMessage(messageDiv, error.message || 'Failed to update event.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Update Event';
+            }
+        });
+    },
+
     async loadEventsList() {
         const container = document.getElementById('events-list-container');
         const badge = document.getElementById('events-total-badge');
 
         try {
             const events = await api.getEvents();
+            this.events = events;
             badge.textContent = String(events.length);
 
             if (events.length === 0) {
@@ -110,16 +185,46 @@ export const AdminPage = {
                                 <p class="event-description">${this.escapeHtml(event.description || '')}</p>
                                 <p class="event-meta">${new Date(event.date).toLocaleDateString()}</p>
                             </div>
-                            <a href="#registrations/${eventId}" class="btn-secondary view-registrations-link" data-event-id="${eventId}">
-                                View Registrations
-                            </a>
+                            <div style="display:flex; gap:0.75rem;">
+                                <button type="button" class="btn-secondary edit-event-btn" data-event-id="${eventId}">
+                                    Edit
+                                </button>
+                                <a href="#registrations/${eventId}" class="btn-secondary view-registrations-link" data-event-id="${eventId}">
+                                    View Registrations
+                                </a>
+                            </div>
                         </div>
                     `;
                 })
                 .join('');
+
+            container.querySelectorAll('.edit-event-btn').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const eventId = btn.dataset.eventId;
+                    const selected = this.events.find((e) => String(e.id || e._id) === String(eventId));
+                    if (!selected) return;
+                    this.populateEditForm(selected);
+                });
+            });
         } catch (error) {
             container.innerHTML = '<div class="error-message">Failed to load events.</div>';
         }
+    },
+
+    populateEditForm(event) {
+        const form = document.getElementById('edit-event-form');
+        document.getElementById('edit-event-id').value = event.id || event._id;
+        document.getElementById('edit-event-title').value = event.title || '';
+        document.getElementById('edit-event-description').value = event.description || '';
+        document.getElementById('edit-event-date').value = this.toDateInputValue(event.date);
+        form.style.display = 'block';
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    },
+
+    toDateInputValue(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toISOString().slice(0, 10);
     },
 
     showMessage(element, text, type) {

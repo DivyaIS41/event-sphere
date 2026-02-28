@@ -19,6 +19,30 @@ export const createEvent = async (req, res) => {
   }
 };
 
+export const updateEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = {
+      title: req.body.title,
+      description: req.body.description,
+      date: req.body.date,
+    };
+
+    const event = await Event.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    return res.json(event);
+  } catch (err) {
+    return res.status(400).json({ message: err.message });
+  }
+};
+
 // backend/src/controllers/event.controller.js
 export const registerForEvent = async (req, res) => {
   try {
