@@ -18,7 +18,6 @@ The entire system runs inside **Docker containers**, making it portable, consist
 - Admin login (demo authentication)
 - Create new events
 - View registrations per event
-- Export registrations (CSV)
 
 ### 🛠 Platform Features
 - RESTful API using Express.js
