@@ -32,7 +32,7 @@ function normalizeEvent(event) {
 export const api = {
     async getEvents() {
         try {
-            const response = await fetch(`${API_BASE}/events`);
+            const response = await fetch(`${API_BASE}/events`, { cache: 'no-store' });
             const data = await parseResponse(response);
             return Array.isArray(data) ? data.map(normalizeEvent) : [];
         } catch (error) {
@@ -76,7 +76,7 @@ export const api = {
     },
 
     async getRegistrations(eventId) {
-        const response = await fetch(`${API_BASE}/events/${eventId}/registrations`);
+        const response = await fetch(`${API_BASE}/events/${eventId}/registrations`, { cache: 'no-store' });
         return parseResponse(response);
     },
 
@@ -86,13 +86,19 @@ export const api = {
                 id: '1',
                 title: 'Tech Symposium',
                 date: '2026-03-15',
-                description: 'Talks and demos from student and industry speakers.'
+                description: 'Talks and demos from student and industry speakers.',
+                capacity: 120,
+                registrationsCount: 68,
+                speakers: ['Dr. Ananya Rao', 'Prof. Karthik Menon']
             },
             {
                 id: '2',
                 title: 'Career Fair',
                 date: '2026-03-20',
-                description: 'Meet hiring partners and explore internship opportunities.'
+                description: 'Meet hiring partners and explore internship opportunities.',
+                capacity: 200,
+                registrationsCount: 145,
+                speakers: ['HR Panel - Tech Companies']
             }
         ];
     }

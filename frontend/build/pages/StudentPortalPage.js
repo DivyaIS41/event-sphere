@@ -182,6 +182,8 @@ export const StudentPortalPage = {
 
         container.innerHTML = events.map((event) => {
             const eventId = String(event.id || event._id);
+            const seatInfo = this.getSeatInfo(event);
+            const isFull = seatInfo.hasCapacity && seatInfo.remainingSeats === 0;
 
             return `
                 <div class="student-event-item">
@@ -189,9 +191,11 @@ export const StudentPortalPage = {
                         <h3 class="event-list-title">${this.escapeHtml(event.title)}</h3>
                         <p class="event-description">${this.escapeHtml(event.description || 'No description')}</p>
                         <p class="event-meta">${new Date(event.date).toLocaleDateString()}</p>
+                        <p class="event-meta"><strong>Speakers:</strong> ${this.formatSpeakers(event.speakers)}</p>
+                        <p class="event-meta"><strong>Seats:</strong> ${seatInfo.totalSeatsLabel} | <strong>Registered:</strong> ${seatInfo.registeredSeats} | <strong>Remaining:</strong> ${seatInfo.remainingSeatsLabel}</p>
                     </div>
-                    <button class="submit-btn student-register-btn" data-event-id="${eventId}">
-                        Open Form
+                    <button class="submit-btn student-register-btn" data-event-id="${eventId}" ${isFull ? 'disabled' : ''}>
+                        ${isFull ? 'Event Full' : 'Open Form'}
                     </button>
                 </div>
             `;
@@ -203,6 +207,8 @@ export const StudentPortalPage = {
 
         document.querySelectorAll('.student-register-btn').forEach((btn) => {
             btn.addEventListener('click', () => {
+                if (btn.disabled) return;
+
                 const eventId = String(btn.dataset.eventId || '');
                 const eventData = lookup.get(eventId);
                 if (!eventData) return;
@@ -221,5 +227,25 @@ export const StudentPortalPage = {
             .replace(/>/g, '&gt;')
             .replace(/\"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    },
+
+    formatSpeakers(speakers) {
+        if (!Array.isArray(speakers) || !speakers.length) return 'To be announced';
+        return speakers.map((speaker) => this.escapeHtml(speaker)).join(', ');
+    },
+
+    getSeatInfo(event) {
+        const capacity = Number(event.capacity || 0);
+        const registered = Number(event.registrationsCount || 0);
+        const hasCapacity = capacity > 0;
+        const remaining = hasCapacity ? Math.max(capacity - registered, 0) : null;
+
+        return {
+            hasCapacity,
+            registeredSeats: Number.isFinite(registered) ? registered : 0,
+            remainingSeats: remaining,
+            totalSeatsLabel: hasCapacity ? String(capacity) : 'Not set',
+            remainingSeatsLabel: hasCapacity ? String(remaining) : 'N/A'
+        };
     }
 };

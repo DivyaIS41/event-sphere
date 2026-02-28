@@ -28,6 +28,14 @@ export const AdminPage = {
                                     <label for="event-description">Description</label>
                                     <textarea id="event-description" name="description" rows="4" required></textarea>
                                 </div>
+                                <div class="form-group">
+                                    <label for="event-capacity">Seating Capacity</label>
+                                    <input type="number" id="event-capacity" name="capacity" min="0" placeholder="e.g. 120" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="event-speakers">Speakers (comma separated)</label>
+                                    <textarea id="event-speakers" name="speakers" rows="2" placeholder="e.g. Dr. Rao, Prof. Mehta"></textarea>
+                                </div>
                                 <button type="submit" class="submit-btn">Create Event</button>
                             </form>
                             <div id="form-message" class="form-message"></div>
@@ -50,6 +58,14 @@ export const AdminPage = {
                                 <div class="form-group">
                                     <label for="edit-event-description">Description</label>
                                     <textarea id="edit-event-description" name="description" rows="4" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit-event-capacity">Seating Capacity</label>
+                                    <input type="number" id="edit-event-capacity" name="capacity" min="0" placeholder="e.g. 120" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="edit-event-speakers">Speakers (comma separated)</label>
+                                    <textarea id="edit-event-speakers" name="speakers" rows="2" placeholder="e.g. Dr. Rao, Prof. Mehta"></textarea>
                                 </div>
                                 <div style="display:flex; gap: 0.75rem;">
                                     <button type="submit" class="submit-btn">Update Event</button>
@@ -91,7 +107,9 @@ export const AdminPage = {
             const eventData = {
                 title: String(formData.get('title') || '').trim(),
                 date: formData.get('date'),
-                description: String(formData.get('description') || '').trim()
+                description: String(formData.get('description') || '').trim(),
+                capacity: Number(formData.get('capacity') || 0),
+                speakers: this.parseSpeakersInput(formData.get('speakers'))
             };
 
             if (!eventData.title || !eventData.date || !eventData.description) {
@@ -136,7 +154,9 @@ export const AdminPage = {
             const eventData = {
                 title: String(document.getElementById('edit-event-title').value || '').trim(),
                 date: document.getElementById('edit-event-date').value,
-                description: String(document.getElementById('edit-event-description').value || '').trim()
+                description: String(document.getElementById('edit-event-description').value || '').trim(),
+                capacity: Number(document.getElementById('edit-event-capacity').value || 0),
+                speakers: this.parseSpeakersInput(document.getElementById('edit-event-speakers').value)
             };
 
             if (!eventId || !eventData.title || !eventData.date || !eventData.description) {
@@ -184,6 +204,8 @@ export const AdminPage = {
                                 <h3 class="event-list-title">${this.escapeHtml(event.title)}</h3>
                                 <p class="event-description">${this.escapeHtml(event.description || '')}</p>
                                 <p class="event-meta">${new Date(event.date).toLocaleDateString()}</p>
+                                <p class="event-meta"><strong>Capacity:</strong> ${Number(event.capacity || 0) > 0 ? Number(event.capacity) : 'Not set'} | <strong>Registered:</strong> ${Number(event.registrationsCount || 0)} | <strong>Remaining:</strong> ${event.remainingSeats ?? 'N/A'}</p>
+                                <p class="event-meta"><strong>Speakers:</strong> ${this.formatSpeakers(event.speakers)}</p>
                             </div>
                             <div style="display:flex; gap:0.75rem;">
                                 <button type="button" class="btn-secondary edit-event-btn" data-event-id="${eventId}">
@@ -217,6 +239,8 @@ export const AdminPage = {
         document.getElementById('edit-event-title').value = event.title || '';
         document.getElementById('edit-event-description').value = event.description || '';
         document.getElementById('edit-event-date').value = this.toDateInputValue(event.date);
+        document.getElementById('edit-event-capacity').value = Number(event.capacity || 0);
+        document.getElementById('edit-event-speakers').value = Array.isArray(event.speakers) ? event.speakers.join(', ') : '';
         form.style.display = 'block';
         form.scrollIntoView({ behavior: 'smooth', block: 'center' });
     },
@@ -230,6 +254,18 @@ export const AdminPage = {
     showMessage(element, text, type) {
         element.textContent = text;
         element.className = `form-message ${type}`;
+    },
+
+    parseSpeakersInput(value) {
+        return String(value || '')
+            .split(',')
+            .map((speaker) => speaker.trim())
+            .filter(Boolean);
+    },
+
+    formatSpeakers(speakers) {
+        if (!Array.isArray(speakers) || !speakers.length) return 'To be announced';
+        return speakers.map((speaker) => this.escapeHtml(speaker)).join(', ');
     },
 
     escapeHtml(text = '') {

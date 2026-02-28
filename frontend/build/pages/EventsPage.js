@@ -21,19 +21,25 @@ export const EventsPage = {
     async afterRender() {
         const grid = document.getElementById('events-grid');
 
-        try {
-            const events = await api.getEvents();
+        const renderEvents = async () => {
+            try {
+                const events = await api.getEvents();
 
-            if (!events.length) {
-                grid.innerHTML = '<div class="empty-state">No events available right now.</div>';
-                return;
+                if (!events.length) {
+                    grid.innerHTML = '<div class="empty-state">No events available right now.</div>';
+                    return;
+                }
+
+                grid.innerHTML = events.map((event) => EventCard.render(event)).join('');
+                EventCard.attachHandlers(events, {
+                    onRegisterSuccess: renderEvents
+                });
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = '<div class="error-message">Failed to load events.</div>';
             }
+        };
 
-            grid.innerHTML = events.map((event) => EventCard.render(event)).join('');
-            EventCard.attachHandlers(events);
-        } catch (err) {
-            console.error(err);
-            grid.innerHTML = '<div class="error-message">Failed to load events.</div>';
-        }
+        await renderEvents();
     }
 };
