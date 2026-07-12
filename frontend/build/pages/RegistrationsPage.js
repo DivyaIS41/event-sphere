@@ -1,81 +1,9 @@
 import { api } from '../services/api.js';
-
-export const RegistrationsPage = {
-    async render() {
-        return `
-            <div class="page registrations-page">
-                <div class="container">
-                    <header class="page-header">
-                        <h1>Event Registrations</h1>
-                        <p>Participant list from backend records.</p>
-                    </header>
-                    <div id="registrations-container">
-                        <div class="loading-spinner">Loading registrations...</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    },
-
-    async afterRender(eventId) {
-        const container = document.getElementById('registrations-container');
-
-        try {
-            const events = await api.getEvents();
-            const event = events.find((e) => e.id === eventId || e._id === eventId);
-
-            if (!event) {
-                container.innerHTML = '<p class="error-message">Event not found.</p>';
-                return;
-            }
-
-            const registrations = await api.getRegistrations(eventId);
-
-            if (!Array.isArray(registrations) || registrations.length === 0) {
-                container.innerHTML = `
-                    <div class="registrations-card">
-                        <h2>${this.escapeHtml(event.title)}</h2>
-                        <p class="no-events">No registrations yet.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = `
-                <div class="registrations-card">
-                    <h2>${this.escapeHtml(event.title)}</h2>
-                    <table class="registrations-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Registered At</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${registrations.map((r) => `
-                                <tr>
-                                    <td>${this.escapeHtml(r.name || '')}</td>
-                                    <td>${this.escapeHtml(r.email || '')}</td>
-                                    <td>${new Date(r.createdAt).toLocaleString()}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        } catch (err) {
-            console.error(err);
-            container.innerHTML = '<p class="error-message">Failed to load registrations.</p>';
-        }
-    },
-
-    escapeHtml(text = '') {
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
+export const RegistrationsPage={
+ regs:[],event:null,
+ render(){return `<div class="page registrations-page"><div class="container"><a href="#admin" class="back-link">← Back to dashboard</a><header class="dashboard-hero compact"><div><span class="eyebrow">ATTENDEE MANAGEMENT</span><h1 id="registration-title">Event registrations</h1><p id="registration-subtitle">Loading attendee records...</p></div><button id="export-csv" class="submit-btn">Export CSV</button></header><section class="attendee-toolbar"><label class="compact-search">⌕ <input id="attendee-search" placeholder="Search name, email or department"></label><span id="attendee-count" class="badge badge-primary">0 attendees</span></section><div id="registrations-container"><div class="loading-spinner">Loading registrations...</div></div></div></div>`;},
+ async afterRender(id){const box=document.getElementById('registrations-container');try{const events=await api.getEvents();this.event=events.find(e=>String(e.id||e._id)===String(id));if(!this.event)throw new Error('Event not found');this.regs=await api.getRegistrations(id);document.getElementById('registration-title').textContent=this.event.title;document.getElementById('registration-subtitle').textContent=`${new Date(this.event.date).toLocaleDateString()} · ${this.event.venue||'Campus'} · ${this.event.registrationsCount||0} registered`;document.getElementById('attendee-search').addEventListener('input',()=>this.paint());document.getElementById('export-csv').addEventListener('click',()=>this.export());this.paint();}catch(e){box.innerHTML=`<div class="error-message">${this.esc(e.message||'Failed to load registrations.')}</div>`;}},
+ paint(){const q=document.getElementById('attendee-search').value.toLowerCase(),list=this.regs.filter(r=>`${r.name} ${r.email} ${r.department}`.toLowerCase().includes(q));document.getElementById('attendee-count').textContent=`${list.length} attendee${list.length===1?'':'s'}`;document.getElementById('registrations-container').innerHTML=list.length?`<div class="registrations-card"><table class="registrations-table"><thead><tr><th>Attendee</th><th>Department</th><th>Year</th><th>Status</th><th>Registered</th></tr></thead><tbody>${list.map(r=>`<tr><td><div class="person-cell"><span>${this.initials(r.name)}</span><div><strong>${this.esc(r.name)}</strong><small>${this.esc(r.email)}</small></div></div></td><td>${this.esc(r.department||'—')}</td><td>${this.esc(r.year||'—')}</td><td><span class="status-dot status-${this.esc(r.status||'confirmed')}">${this.esc(r.status||'confirmed')}</span></td><td>${new Date(r.createdAt).toLocaleString()}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state">No attendees match your search.</div>';},
+ export(){if(!this.regs.length)return alert('There are no registrations to export.');const rows=[['Name','Email','Department','Year','Status','Registered At'],...this.regs.map(r=>[r.name,r.email,r.department||'',r.year||'',r.status||'confirmed',r.createdAt])],csv=rows.map(row=>row.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`${(this.event?.title||'event').replace(/[^a-z0-9]/gi,'-').toLowerCase()}-registrations.csv`;a.click();URL.revokeObjectURL(a.href);},
+ initials(n=''){return String(n).split(' ').slice(0,2).map(x=>x[0]||'').join('').toUpperCase();},esc(v=''){return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
 };

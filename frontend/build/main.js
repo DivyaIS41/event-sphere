@@ -1,4 +1,5 @@
 import { Navbar } from './components/Navbar.js';
+import { AdminNavbar } from './components/AdminNavbar.js';
 import { EventsPage } from './pages/EventsPage.js';
 import { AdminPage } from './pages/AdminPage.js';
 import { RegistrationsPage } from './pages/RegistrationsPage.js';
@@ -14,6 +15,7 @@ class App {
     }
 
     async init() {
+        if (window.location.pathname.startsWith('/admin') && !window.location.hash) window.location.hash = authService.isAuthenticated() ? '#admin' : '#login';
         this.renderNavbar();
         this.setupNavigation();
         await this.handleRouting();
@@ -25,7 +27,11 @@ class App {
 
     renderNavbar() {
         const navbarContainer = document.getElementById('navbar');
-        navbarContainer.innerHTML = Navbar.render();
+        const isAdminWorkspace = ['admin', 'registrations'].includes(this.currentPage);
+        const isAdminLogin = this.currentPage === 'login' || (window.location.pathname.startsWith('/admin') && !authService.isAuthenticated());
+        navbarContainer.innerHTML = isAdminWorkspace ? AdminNavbar.render(this.currentPage) : (isAdminLogin ? '' : Navbar.render());
+        document.body.classList.toggle('admin-shell', isAdminWorkspace);
+        document.body.classList.toggle('admin-login-shell', isAdminLogin);
         this.updateActiveNavLink();
     }
 
@@ -38,8 +44,7 @@ class App {
             if (logoutBtn) {
                 e.preventDefault();
                 authService.logout();
-                this.renderNavbar();
-                window.location.hash = '#events';
+                window.location.href = '/#events';
                 return;
             }
 
@@ -67,6 +72,15 @@ class App {
     normalizeHash(rawHash) {
         const cleaned = (rawHash || '').replace('#', '').trim();
         if (!cleaned) return 'events';
+        const aliases = { discover: 'events', tickets: 'student', dashboard: 'admin', 'admin-login': 'login' };
+        if (aliases[cleaned]) {
+            history.replaceState(null, '', `#${aliases[cleaned]}`);
+            return aliases[cleaned];
+        }
+        if (cleaned === 'event-catalog') {
+            history.replaceState(null, '', '#events');
+            return 'events';
+        }
         return cleaned.startsWith('/') ? cleaned.slice(1) : cleaned;
     }
 

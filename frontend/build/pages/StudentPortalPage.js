@@ -8,26 +8,37 @@ export const StudentPortalPage = {
 
         if (!studentAuthService.isLoggedIn()) {
             return `
-                <div class="page student-portal-page">
-                    <div class="container">
-                        <header class="page-header">
-                            <h1>Student Portal Login</h1>
-                            <p>Login once to access common event registration form.</p>
-                        </header>
-
-                        <section class="student-card student-login-card">
+                <div class="page student-portal-page student-auth-page">
+                    <div class="student-confetti confetti-one"></div><div class="student-confetti confetti-two"></div><div class="student-confetti confetti-three"></div>
+                    <div class="container student-auth-shell">
+                        <section class="student-welcome-art">
+                            <span class="student-kicker">✦ YOUR CAMPUS PASSPORT</span>
+                            <h1>Make campus life<br><em>more colourful.</em></h1>
+                            <p>Save your seat at exciting events, collect your passes, and never miss what is happening around you.</p>
+                            <div class="floating-event-card card-purple"><span>🎨</span><div><strong>Creative events</strong><small>Meet your people</small></div></div>
+                            <div class="floating-event-card card-yellow"><span>⚡</span><div><strong>Tech & innovation</strong><small>Build something bold</small></div></div>
+                            <div class="floating-event-card card-pink"><span>🎵</span><div><strong>Culture & music</strong><small>Feel the campus energy</small></div></div>
+                        </section>
+                        <section class="student-card student-login-card colourful-login">
+                            <div class="student-login-icon">👋</div>
+                            <span class="eyebrow">STUDENT SIGN IN</span>
+                            <h2>Welcome to your space</h2>
+                            <p>Tell us a little about you. No password needed.</p>
                             <form id="student-login-form" class="event-form">
-                                <div class="form-group">
-                                    <label for="student-login-name">Full Name</label>
-                                    <input id="student-login-name" name="name" type="text" required />
+                                <div class="form-group full">
+                                    <label for="student-login-name">Full name</label>
+                                    <div class="colour-input"><span>☺</span><input id="student-login-name" name="name" type="text" placeholder="What should we call you?" required /></div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="student-login-email">Email</label>
-                                    <input id="student-login-email" name="email" type="email" required />
+                                <div class="form-group full">
+                                    <label for="student-login-email">College email</label>
+                                    <div class="colour-input"><span>✉</span><input id="student-login-email" name="email" type="email" placeholder="you@college.edu" required /></div>
                                 </div>
-                                <button type="submit" class="submit-btn">Login as Student</button>
-                                <div id="student-login-message" class="form-message"></div>
+                                <div class="form-group"><label for="student-login-department">Department</label><select id="student-login-department" name="department"><option value="">Choose department</option><option>Computer Science</option><option>Information Science</option><option>Electronics</option><option>Mechanical</option><option>Civil</option><option>Business</option><option>Other</option></select></div>
+                                <div class="form-group"><label for="student-login-year">Year</label><select id="student-login-year" name="year"><option value="">Choose year</option><option value="1">1st year</option><option value="2">2nd year</option><option value="3">3rd year</option><option value="4">4th year</option></select></div>
+                                <button type="submit" class="student-enter-btn full">Enter my portal <span>→</span></button>
+                                <div id="student-login-message" class="form-message full"></div>
                             </form>
+                            <small class="privacy-note">🔒 Your details are only used for event registrations.</small>
                         </section>
                     </div>
                 </div>
@@ -37,13 +48,20 @@ export const StudentPortalPage = {
         return `
             <div class="page student-portal-page">
                 <div class="container">
-                    <header class="page-header page-header-with-action">
+                    <header class="student-dashboard-banner page-header-with-action">
                         <div>
-                            <h1>Student Registration Portal</h1>
-                            <p>Welcome, ${this.escapeHtml(student?.name || 'Student')}.</p>
+                            <span class="student-kicker">MY EVENTSPHERE</span>
+                            <h1>Hey, ${this.escapeHtml((student?.name || 'Student').split(' ')[0])}! <span>👋</span></h1>
+                            <p>Your campus adventure starts here. Manage passes and discover something new.</p>
                         </div>
-                        <button class="btn-secondary" data-action="student-logout">Logout</button>
+                        <div class="student-avatar">${this.escapeHtml((student?.name || 'S').charAt(0).toUpperCase())}</div>
+                        <button class="student-logout" data-action="student-logout">Sign out</button>
                     </header>
+
+                    <section class="student-card student-my-registrations tickets-panel">
+                        <div class="card-header card-header-between"><div><span class="eyebrow">YOUR EVENT PASSES</span><h2>My registrations</h2></div><span id="my-registration-count" class="badge badge-primary">0 tickets</span></div>
+                        <div id="my-registrations"><div class="loading-spinner">Loading your tickets...</div></div>
+                    </section>
 
                     <section class="student-layout">
                         <article class="student-card">
@@ -100,6 +118,7 @@ export const StudentPortalPage = {
         this.bindProfileForm();
         this.bindStudentLogout();
         await this.renderPortalData();
+        await this.renderMyRegistrations();
     },
 
     bindLoginForm() {
@@ -112,7 +131,9 @@ export const StudentPortalPage = {
 
             const result = studentAuthService.login({
                 name: form.name.value,
-                email: form.email.value
+                email: form.email.value,
+                department: form.department.value,
+                year: form.year.value
             });
 
             if (!result.success) {
@@ -172,6 +193,26 @@ export const StudentPortalPage = {
 
         this.renderEvents(eventsContainer, events);
         this.attachEventRegistrationHandlers(events);
+    },
+
+    async renderMyRegistrations() {
+        const box = document.getElementById('my-registrations');
+        const student = studentAuthService.getStudent();
+        if (!box || !student) return;
+        try {
+            const regs = await api.getMyRegistrations(student.email);
+            const count = document.getElementById('my-registration-count');
+            if (count) count.textContent = `${regs.length} ticket${regs.length === 1 ? '' : 's'}`;
+            box.innerHTML = regs.length ? regs.map((r) => `<div class="student-event-item ticket-row"><div class="ticket-mark">✓</div><div class="ticket-info"><span class="badge badge-primary">${this.escapeHtml(r.status || 'confirmed')}</span><h3>${this.escapeHtml(r.eventId?.title || 'Event')}</h3><p>${r.eventId?.date ? new Date(r.eventId.date).toLocaleDateString() : ''} · ${this.escapeHtml(r.eventId?.startTime || '10:00')} · ${this.escapeHtml(r.eventId?.venue || 'Campus')}</p><small>Registered with ${this.escapeHtml(student.email)}</small></div><button class="btn-danger cancel-registration" data-id="${r._id}">Cancel registration</button></div>`).join('') : '<div class="empty-state"><strong>No registrations yet</strong><p>Explore an event and reserve your first seat.</p><a href="#events" class="submit-btn">Explore events</a></div>';
+            box.querySelectorAll('.cancel-registration').forEach((button) => button.addEventListener('click', async () => {
+                if (!confirm('Cancel this registration?')) return;
+                button.disabled = true;
+                button.textContent = 'Cancelling...';
+                await api.cancelRegistration(button.dataset.id);
+                await this.renderMyRegistrations();
+                await this.renderPortalData();
+            }));
+        } catch (_) { box.innerHTML = '<div class="error-message">Could not load registrations.</div>'; }
     },
 
     renderEvents(container, events) {

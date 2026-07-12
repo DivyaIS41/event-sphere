@@ -80,6 +80,23 @@ export const api = {
         return parseResponse(response);
     },
 
+    async getMyRegistrations(email) {
+        const response = await fetch(`${API_BASE}/registrations?email=${encodeURIComponent(email)}`, { cache: 'no-store' });
+        return parseResponse(response);
+    },
+
+    async cancelRegistration(id) {
+        return parseResponse(await fetch(`${API_BASE}/registrations/${id}`, { method: 'DELETE' }));
+    },
+
+    async deleteEvent(id) {
+        return parseResponse(await fetch(`${API_BASE}/events/${id}`, { method: 'DELETE' }));
+    },
+
+    async getAnalytics() {
+        return parseResponse(await fetch(`${API_BASE}/analytics`, { cache: 'no-store' }));
+    },
+
     getMockEvents() {
         return [
             {

@@ -1,279 +1,43 @@
 import { api } from '../services/api.js';
 
 export const AdminPage = {
-    async render() {
-        return `
-            <div class="page admin-page">
-                <div class="container">
-                    <header class="page-header">
-                        <h1>Admin Dashboard</h1>
-                        <p>Create, edit, and monitor event registrations.</p>
-                    </header>
-
-                    <section class="admin-dashboard">
-                        <article class="admin-card">
-                            <div class="card-header">
-                                <h2>Create Event</h2>
-                            </div>
-                            <form id="create-event-form" class="event-form">
-                                <div class="form-group">
-                                    <label for="event-title">Title</label>
-                                    <input type="text" id="event-title" name="title" required />
-                                </div>
-                                <div class="form-group">
-                                    <label for="event-date">Date</label>
-                                    <input type="date" id="event-date" name="date" required />
-                                </div>
-                                <div class="form-group">
-                                    <label for="event-description">Description</label>
-                                    <textarea id="event-description" name="description" rows="4" required></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="event-capacity">Seating Capacity</label>
-                                    <input type="number" id="event-capacity" name="capacity" min="0" placeholder="e.g. 120" />
-                                </div>
-                                <div class="form-group">
-                                    <label for="event-speakers">Speakers (comma separated)</label>
-                                    <textarea id="event-speakers" name="speakers" rows="2" placeholder="e.g. Dr. Rao, Prof. Mehta"></textarea>
-                                </div>
-                                <button type="submit" class="submit-btn">Create Event</button>
-                            </form>
-                            <div id="form-message" class="form-message"></div>
-                        </article>
-
-                        <article class="admin-card">
-                            <div class="card-header">
-                                <h2>Edit Event</h2>
-                            </div>
-                            <form id="edit-event-form" class="event-form" style="display:none;">
-                                <input type="hidden" id="edit-event-id" />
-                                <div class="form-group">
-                                    <label for="edit-event-title">Title</label>
-                                    <input type="text" id="edit-event-title" name="title" required />
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit-event-date">Date</label>
-                                    <input type="date" id="edit-event-date" name="date" required />
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit-event-description">Description</label>
-                                    <textarea id="edit-event-description" name="description" rows="4" required></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit-event-capacity">Seating Capacity</label>
-                                    <input type="number" id="edit-event-capacity" name="capacity" min="0" placeholder="e.g. 120" />
-                                </div>
-                                <div class="form-group">
-                                    <label for="edit-event-speakers">Speakers (comma separated)</label>
-                                    <textarea id="edit-event-speakers" name="speakers" rows="2" placeholder="e.g. Dr. Rao, Prof. Mehta"></textarea>
-                                </div>
-                                <div style="display:flex; gap: 0.75rem;">
-                                    <button type="submit" class="submit-btn">Update Event</button>
-                                    <button type="button" id="cancel-edit-btn" class="btn-secondary">Cancel</button>
-                                </div>
-                            </form>
-                            <div id="edit-message" class="form-message"></div>
-                        </article>
-
-                        <article class="admin-card">
-                            <div class="card-header card-header-between">
-                                <h2>Events</h2>
-                                <span class="badge badge-primary" id="events-total-badge">0</span>
-                            </div>
-                            <div id="events-list-container" class="events-list-container">
-                                <div class="loading-spinner">Loading events...</div>
-                            </div>
-                        </article>
-                    </section>
-                </div>
-            </div>
-        `;
-    },
-
+    events: [], editingId: '',
+    render() { return `<div class="page admin-page"><div class="container">
+        <header class="dashboard-hero admin-colour-hero"><div><span class="eyebrow">✦ CONTROL CENTER</span><h1>Make campus happen.</h1><p>Create colourful experiences, manage capacity, and watch your community come alive.</p></div><div class="admin-hero-shapes"><i>⚡</i><b>🎉</b></div><button id="new-event-btn" class="submit-btn">＋ New event</button></header>
+        <section id="admin-stats" class="stats-strip dashboard-stats"><div><strong>—</strong><span>Total events</span></div><div><strong>—</strong><span>Registrations</span></div><div><strong>—</strong><span>Checked in</span></div><div><strong>—</strong><span>Top category</span></div></section>
+        <section class="admin-workspace">
+          <aside class="admin-card event-editor" id="event-editor"><div class="card-header card-header-between"><div><span class="eyebrow">EVENT BUILDER</span><h2 id="editor-title">Create event</h2></div><button type="button" id="close-editor" class="icon-button">×</button></div>
+            <form id="event-form" class="event-form"><input type="hidden" name="id">
+              <div class="form-group full"><label>Event title</label><input name="title" required placeholder="e.g. Design Sprint 2026"></div>
+              <div class="form-group full"><label>Description</label><textarea name="description" rows="3" required placeholder="What should students expect?"></textarea></div>
+              <div class="form-group"><label>Date</label><input type="date" name="date" required></div><div class="form-group"><label>Start time</label><input type="time" name="startTime" value="10:00"></div>
+              <div class="form-group"><label>Category</label><select name="category"><option>Technical</option><option>Cultural</option><option>Sports</option><option>Workshop</option><option>Career</option><option>Club</option><option>General</option></select></div><div class="form-group"><label>Mode</label><select name="mode"><option>Offline</option><option>Online</option><option>Hybrid</option></select></div>
+              <div class="form-group"><label>Venue</label><input name="venue" placeholder="Main Auditorium"></div><div class="form-group"><label>Capacity</label><input type="number" min="0" name="capacity" placeholder="120"></div>
+              <div class="form-group"><label>Organizer</label><input name="organizer" placeholder="IEEE Student Branch"></div><div class="form-group"><label>Duration</label><input name="duration" placeholder="2 hours"></div>
+              <div class="form-group full"><label>Speakers</label><input name="speakers" placeholder="Comma-separated names"></div><div class="form-group full"><label>Tags</label><input name="tags" placeholder="AI, beginner, hands-on"></div>
+              <div class="form-group"><label>Registration deadline</label><input type="date" name="registrationDeadline"></div><div class="form-group"><label>Visibility</label><select name="status"><option value="published">Published</option><option value="draft">Draft</option><option value="cancelled">Cancelled</option></select></div>
+              <label class="checkbox-wrap full"><input type="checkbox" name="featured"> Feature on discovery page</label>
+              <div class="form-actions full"><button class="submit-btn" type="submit" id="save-event">Publish event</button><button class="btn-secondary" type="button" id="reset-event">Clear</button></div><div id="form-message" class="form-message full"></div>
+            </form>
+          </aside>
+          <main class="admin-card event-manager"><div class="card-header manager-head"><div><span class="eyebrow">EVENT INVENTORY</span><h2>Manage events <span id="events-total-badge" class="badge badge-primary">0</span></h2></div><label class="compact-search">⌕ <input id="admin-event-search" placeholder="Search events"></label></div><div id="events-list-container" class="admin-events-grid"><div class="loading-spinner">Loading events...</div></div></main>
+        </section></div></div>`; },
     async afterRender() {
-        await this.loadEventsList();
-        this.bindCreateForm();
-        this.bindEditForm();
+        this.form=document.getElementById('event-form');
+        this.form.addEventListener('submit',e=>this.save(e));
+        document.getElementById('reset-event').addEventListener('click',()=>this.resetForm());
+        document.getElementById('new-event-btn').addEventListener('click',()=>{this.resetForm();document.getElementById('event-editor').scrollIntoView({behavior:'smooth'});});
+        document.getElementById('close-editor').addEventListener('click',()=>this.resetForm());
+        document.getElementById('admin-event-search').addEventListener('input',()=>this.paintEvents());
+        await Promise.all([this.loadAnalytics(),this.loadEvents()]);
     },
-
-    bindCreateForm() {
-        const form = document.getElementById('create-event-form');
-        const messageDiv = document.getElementById('form-message');
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const formData = new FormData(form);
-            const eventData = {
-                title: String(formData.get('title') || '').trim(),
-                date: formData.get('date'),
-                description: String(formData.get('description') || '').trim(),
-                capacity: Number(formData.get('capacity') || 0),
-                speakers: this.parseSpeakersInput(formData.get('speakers'))
-            };
-
-            if (!eventData.title || !eventData.date || !eventData.description) {
-                this.showMessage(messageDiv, 'All fields are required.', 'error');
-                return;
-            }
-
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Creating...';
-
-            try {
-                await api.createEvent(eventData);
-                form.reset();
-                this.showMessage(messageDiv, 'Event created successfully.', 'success');
-                await this.loadEventsList();
-            } catch (error) {
-                this.showMessage(messageDiv, error.message || 'Failed to create event.', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Create Event';
-            }
-        });
-    },
-
-    bindEditForm() {
-        const form = document.getElementById('edit-event-form');
-        const messageDiv = document.getElementById('edit-message');
-        const cancelBtn = document.getElementById('cancel-edit-btn');
-
-        cancelBtn.addEventListener('click', () => {
-            form.style.display = 'none';
-            form.reset();
-            messageDiv.textContent = '';
-            messageDiv.className = 'form-message';
-        });
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const eventId = document.getElementById('edit-event-id').value;
-
-            const eventData = {
-                title: String(document.getElementById('edit-event-title').value || '').trim(),
-                date: document.getElementById('edit-event-date').value,
-                description: String(document.getElementById('edit-event-description').value || '').trim(),
-                capacity: Number(document.getElementById('edit-event-capacity').value || 0),
-                speakers: this.parseSpeakersInput(document.getElementById('edit-event-speakers').value)
-            };
-
-            if (!eventId || !eventData.title || !eventData.date || !eventData.description) {
-                this.showMessage(messageDiv, 'All fields are required.', 'error');
-                return;
-            }
-
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Updating...';
-
-            try {
-                await api.updateEvent(eventId, eventData);
-                this.showMessage(messageDiv, 'Event updated successfully.', 'success');
-                await this.loadEventsList();
-            } catch (error) {
-                this.showMessage(messageDiv, error.message || 'Failed to update event.', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Update Event';
-            }
-        });
-    },
-
-    async loadEventsList() {
-        const container = document.getElementById('events-list-container');
-        const badge = document.getElementById('events-total-badge');
-
-        try {
-            const events = await api.getEvents();
-            this.events = events;
-            badge.textContent = String(events.length);
-
-            if (events.length === 0) {
-                container.innerHTML = '<div class="empty-state">No events created yet.</div>';
-                return;
-            }
-
-            container.innerHTML = events
-                .map((event) => {
-                    const eventId = event.id || event._id;
-                    return `
-                        <div class="event-list-item">
-                            <div>
-                                <h3 class="event-list-title">${this.escapeHtml(event.title)}</h3>
-                                <p class="event-description">${this.escapeHtml(event.description || '')}</p>
-                                <p class="event-meta">${new Date(event.date).toLocaleDateString()}</p>
-                                <p class="event-meta"><strong>Capacity:</strong> ${Number(event.capacity || 0) > 0 ? Number(event.capacity) : 'Not set'} | <strong>Registered:</strong> ${Number(event.registrationsCount || 0)} | <strong>Remaining:</strong> ${event.remainingSeats ?? 'N/A'}</p>
-                                <p class="event-meta"><strong>Speakers:</strong> ${this.formatSpeakers(event.speakers)}</p>
-                            </div>
-                            <div style="display:flex; gap:0.75rem;">
-                                <button type="button" class="btn-secondary edit-event-btn" data-event-id="${eventId}">
-                                    Edit
-                                </button>
-                                <a href="#registrations/${eventId}" class="btn-secondary view-registrations-link" data-event-id="${eventId}">
-                                    View Registrations
-                                </a>
-                            </div>
-                        </div>
-                    `;
-                })
-                .join('');
-
-            container.querySelectorAll('.edit-event-btn').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const eventId = btn.dataset.eventId;
-                    const selected = this.events.find((e) => String(e.id || e._id) === String(eventId));
-                    if (!selected) return;
-                    this.populateEditForm(selected);
-                });
-            });
-        } catch (error) {
-            container.innerHTML = '<div class="error-message">Failed to load events.</div>';
-        }
-    },
-
-    populateEditForm(event) {
-        const form = document.getElementById('edit-event-form');
-        document.getElementById('edit-event-id').value = event.id || event._id;
-        document.getElementById('edit-event-title').value = event.title || '';
-        document.getElementById('edit-event-description').value = event.description || '';
-        document.getElementById('edit-event-date').value = this.toDateInputValue(event.date);
-        document.getElementById('edit-event-capacity').value = Number(event.capacity || 0);
-        document.getElementById('edit-event-speakers').value = Array.isArray(event.speakers) ? event.speakers.join(', ') : '';
-        form.style.display = 'block';
-        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    },
-
-    toDateInputValue(value) {
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return '';
-        return date.toISOString().slice(0, 10);
-    },
-
-    showMessage(element, text, type) {
-        element.textContent = text;
-        element.className = `form-message ${type}`;
-    },
-
-    parseSpeakersInput(value) {
-        return String(value || '')
-            .split(',')
-            .map((speaker) => speaker.trim())
-            .filter(Boolean);
-    },
-
-    formatSpeakers(speakers) {
-        if (!Array.isArray(speakers) || !speakers.length) return 'To be announced';
-        return speakers.map((speaker) => this.escapeHtml(speaker)).join(', ');
-    },
-
-    escapeHtml(text = '') {
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
+    async loadAnalytics(){try{const d=await api.getAnalytics(),v=[d.events,d.registrations,d.attended,d.categories?.[0]?._id||'—'];document.querySelectorAll('#admin-stats strong').forEach((e,i)=>e.textContent=v[i]);}catch(_){}},
+    async loadEvents(){this.events=await api.getEvents();document.getElementById('events-total-badge').textContent=this.events.length;this.paintEvents();},
+    paintEvents(){const q=document.getElementById('admin-event-search').value.toLowerCase(),box=document.getElementById('events-list-container'),list=this.events.filter(e=>`${e.title} ${e.category} ${e.venue}`.toLowerCase().includes(q));box.innerHTML=list.length?list.map(e=>{const id=e.id||e._id;return `<article class="admin-event-row"><div class="admin-event-date"><strong>${new Date(e.date).getDate()}</strong><span>${new Date(e.date).toLocaleString('en',{month:'short'})}</span></div><div class="admin-event-copy"><div><span class="status-dot status-${this.esc(e.status||'published')}">${this.esc(e.status||'published')}</span><span class="category-label">${this.esc(e.category||'General')}</span></div><h3>${this.esc(e.title)}</h3><p>${this.esc(e.venue||'Campus')} · ${this.esc(e.startTime||'10:00')} · ${this.esc(e.mode||'Offline')}</p><div class="mini-progress"><i style="width:${e.capacity?Math.min(100,(e.registrationsCount||0)/e.capacity*100):10}%"></i></div><small>${e.registrationsCount||0} registered · ${e.remainingSeats??'Unlimited'} remaining</small></div><div class="row-actions"><button class="btn-secondary edit-event" data-id="${id}">Edit</button><a class="btn-secondary view-registrations-link" data-event-id="${id}" href="#registrations/${id}">Attendees</a><button class="btn-danger delete-event" data-id="${id}">Delete</button></div></article>`}).join(''):'<div class="empty-state">No events found.</div>';box.querySelectorAll('.edit-event').forEach(b=>b.addEventListener('click',()=>this.edit(b.dataset.id)));box.querySelectorAll('.delete-event').forEach(b=>b.addEventListener('click',()=>this.remove(b)));},
+    payload(){const f=new FormData(this.form);return {title:f.get('title')?.trim(),description:f.get('description')?.trim(),date:f.get('date'),startTime:f.get('startTime'),category:f.get('category'),mode:f.get('mode'),venue:f.get('venue')?.trim(),capacity:Number(f.get('capacity')||0),organizer:f.get('organizer')?.trim(),duration:f.get('duration')?.trim(),speakers:this.list(f.get('speakers')),tags:this.list(f.get('tags')),registrationDeadline:f.get('registrationDeadline')||null,status:f.get('status'),featured:f.get('featured')==='on'};},
+    async save(e){e.preventDefault();const data=this.payload(),msg=document.getElementById('form-message'),btn=document.getElementById('save-event');if(!data.title||!data.date||!data.description){return this.message(msg,'Title, date and description are required.','error');}btn.disabled=true;btn.textContent='Saving...';try{this.editingId?await api.updateEvent(this.editingId,data):await api.createEvent(data);this.message(msg,this.editingId?'Event updated.':'Event published.','success');this.resetForm(false);await Promise.all([this.loadEvents(),this.loadAnalytics()]);}catch(err){this.message(msg,err.message,'error');}finally{btn.disabled=false;btn.textContent=this.editingId?'Save changes':'Publish event';}},
+    edit(id){const e=this.events.find(x=>String(x.id||x._id)===String(id));if(!e)return;this.editingId=id;document.getElementById('editor-title').textContent='Edit event';document.getElementById('save-event').textContent='Save changes';for(const k of ['title','description','startTime','category','mode','venue','capacity','organizer','duration','status'])if(this.form.elements[k])this.form.elements[k].value=e[k]??'';this.form.elements.date.value=this.date(e.date);this.form.elements.registrationDeadline.value=this.date(e.registrationDeadline);this.form.elements.speakers.value=(e.speakers||[]).join(', ');this.form.elements.tags.value=(e.tags||[]).join(', ');this.form.elements.featured.checked=!!e.featured;document.getElementById('event-editor').scrollIntoView({behavior:'smooth'});},
+    async remove(btn){if(!confirm('Delete this event and every registration attached to it?'))return;btn.disabled=true;btn.textContent='Deleting...';try{await api.deleteEvent(btn.dataset.id);await Promise.all([this.loadEvents(),this.loadAnalytics()]);}catch(e){alert(e.message);btn.disabled=false;}},
+    resetForm(clear=true){this.editingId='';this.form.reset();this.form.elements.startTime.value='10:00';document.getElementById('editor-title').textContent='Create event';document.getElementById('save-event').textContent='Publish event';if(clear)document.getElementById('form-message').textContent='';},
+    list(v){return String(v||'').split(',').map(x=>x.trim()).filter(Boolean);},date(v){if(!v)return'';const d=new Date(v);return Number.isNaN(d)?'':d.toISOString().slice(0,10);},message(e,t,c){e.textContent=t;e.className=`form-message ${c}`;},esc(v=''){return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
 };

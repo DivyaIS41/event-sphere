@@ -19,6 +19,9 @@ const registrationSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    department: { type: String, default: "", trim: true },
+    year: { type: String, default: "", trim: true },
+    status: { type: String, enum: ["confirmed", "waitlisted", "attended"], default: "confirmed" },
   },
   { timestamps: true }
 );

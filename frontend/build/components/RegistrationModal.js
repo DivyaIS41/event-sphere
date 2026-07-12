@@ -61,7 +61,9 @@ export const RegistrationModal = {
             const formData = new FormData(form);
             const payload = {
                 name: String(formData.get('name') || '').trim(),
-                email: String(formData.get('email') || '').trim().toLowerCase()
+                email: String(formData.get('email') || '').trim().toLowerCase(),
+                department: String(formData.get('department') || '').trim(),
+                year: String(student?.year || '')
             };
 
             if (!payload.name || !/^\S+@\S+\.\S+$/.test(payload.email)) {

@@ -6,7 +6,7 @@ export const Navbar = {
         const isAuthenticated = authService.isAuthenticated();
         const user = authService.getCurrentUser();
         const student = studentAuthService.getStudent();
-        const studentLabel = studentAuthService.isLoggedIn() ? `Student: ${student?.name || 'Logged In'}` : 'Student Portal';
+        const studentLabel = studentAuthService.isLoggedIn() ? 'My Tickets' : 'Student Portal';
 
         return `
             <div class="navbar">
@@ -19,16 +19,11 @@ export const Navbar = {
                         </a>
 
                         <div class="nav-links">
-                            <a href="#events" data-nav="events" class="nav-link">Events</a>
+                            <a href="#events" data-nav="events" class="nav-link">Discover</a>
                             <a href="#student" data-nav="student" class="nav-link">${studentLabel}</a>
-                            ${isAuthenticated ? `
-                                <a href="#admin" data-nav="admin" class="nav-link">Dashboard</a>
-                                <span class="nav-user">${user?.username || 'admin'}</span>
-                                <button class="btn-secondary nav-logout" data-action="logout">Logout</button>
-                            ` : `
-                                <a href="#login" data-nav="login" class="nav-link">Admin Login</a>
-                            `}
+                            <a href="/admin#${isAuthenticated ? 'admin' : 'login'}" class="nav-link admin-entry">${isAuthenticated ? 'Admin Console ↗' : 'Admin Login'}</a>
                         </div>
+                        <button class="theme-toggle" aria-label="Toggle dark mode" onclick="document.body.classList.toggle('dark'); localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light')">◐</button>
                     </div>
                 </div>
             </div>
